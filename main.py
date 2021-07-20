@@ -4,6 +4,7 @@ import sys
 from threading import Thread
 import random
 import os
+import time
 
 clients = []
 usernames = []
@@ -42,12 +43,14 @@ def client_handler(connection, client_address):
 		connection.close()
 
 def printer():
-	banner = Fore.YELLOW + "\n[*] Server running at " + sys.argv[1] + ", port " + sys.argv[2] + Style.RESET_ALL + "\n\n"
-	os.system("clear")
-	print(banner)
-	print(Fore.BLUE + "[*] Clients: \n\n" + Style.RESET_ALL)
-	for user in usernames:
-		print("\t", user)
+	while True:
+		time.sleep(2)
+		banner = Fore.YELLOW + "\n[*] Server running at " + sys.argv[1] + ", port " + sys.argv[2] + Style.RESET_ALL + "\n\n"
+		os.system("clear")
+		print(banner)
+		print(Fore.BLUE + "[*] Clients: \n" + Style.RESET_ALL)
+		for user in usernames:
+			print("\t", user.replace(':',''))
 
 
 def server_params():

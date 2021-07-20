@@ -3,8 +3,10 @@ import socket
 import sys
 from threading import Thread
 import random
+import os
 
 clients = []
+usernames = []
 
 def handle():
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -12,37 +14,41 @@ def handle():
 	s.listen(5)
 
 	while True:
-		print("\nWaiting for connections")
+		banner = Fore.YELLOW + "\n[*] Server running at " + sys.argv[1] + ", port " + sys.argv[2] + Style.RESET_ALL + "\n\n"
+		Thread(target=printer).start()
 		connection, client_address = s.accept()
 		Thread(target=client_handler, args=(connection, client_address)).start()
 		clients.append(connection)
 
 def client_handler(connection, client_address):
 	try:
-		print("connection from: ", client_address)
 		connection.send(b'Type your username: ')
 		b = connection.recv(16)
 		colors = list(vars(Fore).values())
 		username = "\n " + random.choice(colors) + "~ " + b.decode().rstrip() + ": " + Style.RESET_ALL
-		print(username)
+		usernames.append(username)
 
 		while True:
-			print(clients)
 			data = connection.recv(1024)
-			print("Data received: ", data)
 			if data:
 				dat = username.encode('utf-8') + data
-				print("Sending: ", dat)
-				print("Sending back the data")
 				#connection.sendall(dat)
 				for conn in clients:
 					if connection is not conn:
 						conn.sendall(dat)
 			else:
-				print("No data to send")
 				break
 	finally:
 		connection.close()
+
+def printer():
+	banner = Fore.YELLOW + "\n[*] Server running at " + sys.argv[1] + ", port " + sys.argv[2] + Style.RESET_ALL + "\n\n"
+	os.system("clear")
+	print(banner)
+	print(Fore.BLUE + "[*] Clients: \n\n" + Style.RESET_ALL)
+	for user in usernames:
+		print("\t", user)
+
 
 def server_params():
 	print( Fore.BLUE + "\n [*] Usage: \n\n\t" + Style.RESET_ALL + 

@@ -5,21 +5,27 @@ from threading import Thread
 import random
 import os
 import time
+import signal
 
-clients = []
+# Global variables
+clients = {}
 usernames = []
+PID = os.getpid()
+
+def signal_handler(sig, frame):
+	os.system("kill -9 {} &>/dev/null".format(PID))
+	os.system("clear")
 
 def handle():
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	s.bind((sys.argv[1],int(sys.argv[2])))
 	s.listen(5)
+	Thread(target=printer).start()
 
 	while True:
-		banner = Fore.YELLOW + "\n[*] Server running at " + sys.argv[1] + ", port " + sys.argv[2] + Style.RESET_ALL + "\n\n"
-		Thread(target=printer).start()
+		signal.signal(signal.SIGINT, signal_handler)
 		connection, client_address = s.accept()
 		Thread(target=client_handler, args=(connection, client_address)).start()
-		clients.append(connection)
 
 def client_handler(connection, client_address):
 	try:
@@ -28,6 +34,7 @@ def client_handler(connection, client_address):
 		colors = list(vars(Fore).values())
 		username = "\n " + random.choice(colors) + "~ " + b.decode().rstrip() + ": " + Style.RESET_ALL
 		usernames.append(username)
+		clients[connection] = username
 
 		while True:
 			data = connection.recv(1024)
@@ -44,14 +51,22 @@ def client_handler(connection, client_address):
 
 def printer():
 	while True:
-		time.sleep(2)
 		banner = Fore.YELLOW + "\n[*] Server running at " + sys.argv[1] + ", port " + sys.argv[2] + Style.RESET_ALL + "\n\n"
-		os.system("clear")
 		print(banner)
 		print(Fore.BLUE + "[*] Clients: \n" + Style.RESET_ALL)
-		for user in usernames:
+
+		try:
+			for sock in clients.keys():
+				if sock.fileno() == -1:
+					clients.pop(sock,None)
+		except:
+			pass
+
+		for user in clients.values():
 			print("\t", user.replace(':',''))
 
+		time.sleep(2)
+		os.system("clear")
 
 def server_params():
 	print( Fore.BLUE + "\n [*] Usage: \n\n\t" + Style.RESET_ALL + 
